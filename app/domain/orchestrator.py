@@ -11,24 +11,37 @@ def handle_chat(
     signals: dict | None = None,
 ) -> dict:
     signals = signals or {"keywords": [], "entities": []}
-    signal_text = " ".join(signals.get("keywords", []) + signals.get("entities", []))
-    combined_text = f"{message} {signal_text}".strip()
+    keywords = [k.lower() for k in signals.get("keywords", [])]
+    entities = [e.lower() for e in signals.get("entities", [])]
+    signal_text = " ".join(keywords + entities)
+    combined_text = signal_text or message
 
-    priority = detect_priority(message, locale)
-    if priority != "CRITICAL":
-        critical = [k.lower() for k in locale.get("critical_keywords", [])]
-        if any(k in signals.get("keywords", []) for k in critical):
-            priority = "CRITICAL"
-        if "cold room" in signals.get("keywords", []):
-            priority = "CRITICAL"
+    critical_terms = {
+        "cold room",
+        "server room",
+        "warehouse",
+        "export",
+        "chiller",
+        "compressor down",
+    }
+    priority = "CRITICAL" if any(t in signal_text for t in critical_terms) else "NORMAL"
 
-    intent = detect_intent(message, priority)
-    revenue_tier = detect_revenue_tier(message, priority)
+    maintenance_terms = {"maintenance", "service", "clean", "tune-up", "inspection"}
+    if priority == "CRITICAL":
+        intent = "emergency_repair"
+    elif any(t in signal_text for t in maintenance_terms):
+        intent = "maintenance"
+    else:
+        intent = "general_inquiry"
+
+    commercial_terms = {"warehouse", "hotel", "export"}
+    revenue_tier = "high" if priority == "CRITICAL" or any(
+        t in signal_text for t in commercial_terms
+    ) else "low"
 
     territory_result = validate_territory(combined_text, territory)
-    required_skill = "cold_room" if any(
-        k in combined_text.lower() for k in ["cold room", "chiller"]
-    ) else "hvac_ac"
+    cold_terms = {"cold room", "chiller", "freezer"}
+    required_skill = "cold_room" if any(t in signal_text for t in cold_terms) else "hvac_ac"
     tech = check_tech_availability(
         required_skill, territory_result["service_tier"], techs
     )

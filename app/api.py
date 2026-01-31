@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request
 from .db import Lead, SessionLocal
 from .domain.orchestrator import handle_chat
 from .integrations.nlu_client import analyze_text, nlu_to_signals
+from .integrations.watsonx_client import generate_message
 from .models import ChatRequest, ChatResponse
 
 router = APIRouter()
@@ -33,6 +34,21 @@ def chat(req: ChatRequest, request: Request):
         techs=request.app.state.techs,
         signals=signals,
     )
+
+    try:
+        response["agent_message"] = generate_message(
+            api_key=request.app.state.settings.WATSONX_API_KEY,
+            base_url=request.app.state.settings.WATSONX_URL,
+            project_id=request.app.state.settings.WATSONX_PROJECT_ID,
+            model_id=request.app.state.settings.WATSONX_MODEL_ID,
+            user_message=req.message,
+            metadata=response["metadata"],
+            version=request.app.state.settings.WATSONX_VERSION,
+        )
+        response["metadata"]["watsonx_used"] = True
+    except Exception as exc:
+        response["metadata"]["watsonx_error"] = str(exc)
+        response["metadata"]["watsonx_used"] = False
 
     if signals["keywords"] or signals["entities"]:
         response["metadata"]["nlu_keywords"] = signals["keywords"]
@@ -78,3 +94,20 @@ def get_leads() -> list[dict]:
         return [lead.to_dict() for lead in leads]
     finally:
         db.close()
+
+
+@router.get("/watsonx/test")
+def watsonx_test(request: Request) -> dict:
+    try:
+        msg = generate_message(
+            api_key=request.app.state.settings.WATSONX_API_KEY,
+            base_url=request.app.state.settings.WATSONX_URL,
+            project_id=request.app.state.settings.WATSONX_PROJECT_ID,
+            model_id=request.app.state.settings.WATSONX_MODEL_ID,
+            user_message="Test message for watsonx.",
+            metadata={"priority": "NORMAL"},
+            version=request.app.state.settings.WATSONX_VERSION,
+        )
+        return {"status": "ok", "message": msg}
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}

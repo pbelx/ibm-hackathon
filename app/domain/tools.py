@@ -1,18 +1,26 @@
 def validate_territory(message: str, territory: dict) -> dict:
     message_lower = message.lower()
     zones = territory.get("zones", [])
+    best = None
+    best_score = -1
     for zone in zones:
         for area in zone.get("areas", []):
             keywords = area.get("keywords", [])
-            if any(k in message_lower for k in keywords):
-                return {
-                    "territory_code": area.get("territory_code"),
-                    "zone_id": zone.get("zone_id"),
-                    "service_tier": zone.get("service_tier"),
-                    "multiplier": zone.get("multiplier", 1.0),
-                }
+            score = sum(1 for k in keywords if k in message_lower)
+            if score > best_score:
+                best_score = score
+                best = (zone, area)
 
     # Default to Zone B first area if no match
+    if best and best_score > 0:
+        zone, area = best
+        return {
+            "territory_code": area.get("territory_code"),
+            "zone_id": zone.get("zone_id"),
+            "service_tier": zone.get("service_tier"),
+            "multiplier": zone.get("multiplier", 1.0),
+        }
+
     for zone in zones:
         if zone.get("zone_id") == "B":
             area = zone.get("areas", [{}])[0]

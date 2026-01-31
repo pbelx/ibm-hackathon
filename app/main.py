@@ -15,6 +15,7 @@ def startup() -> None:
     app.state.locale = load_locale()
     app.state.territory = load_territory()
     app.state.techs = load_techs()
+    app.state.settings = settings
     app.state.nlu_client = None
     if settings.NLU_API_KEY and settings.NLU_URL:
         app.state.nlu_client = build_nlu_client(
