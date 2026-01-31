@@ -1,0 +1,22 @@
+{
+  "locale_id": "EBB",
+  "display_name": "Entebbe",
+  "critical_keywords": [
+    "fire",
+    "smoke",
+    "not cooling",
+    "spoiling",
+    "emergency",
+    "leak",
+    "gas"
+  ],
+  "emergency_threshold": 0.8,
+  "business_hours": {
+    "weekday": "08:00-18:00",
+    "weekend": "09:00-14:00"
+  },
+  "traffic": {
+    "default_padding_minutes": 25
+  },
+  "currency": "UGX"
+}

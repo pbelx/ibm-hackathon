@@ -1,0 +1,46 @@
+{
+  "technicians": [
+    {
+      "tech_id": "TECH-001",
+      "display_name": "James Kato",
+      "skills": ["hvac_ac", "cold_room"],
+      "service_tiers_allowed": ["gold", "standard"],
+      "current_status": "available",
+      "calendar": [
+        {
+          "start": "2026-02-01T09:00:00+03:00",
+          "end": "2026-02-01T12:00:00+03:00",
+          "type": "maintenance"
+        }
+      ],
+      "working_hours": {
+        "weekday": "08:00-18:00",
+        "weekend": "09:00-14:00"
+      },
+      "base_location": {
+        "name": "Entebbe Industrial Area"
+      }
+    },
+    {
+      "tech_id": "TECH-002",
+      "display_name": "Sarah Namara",
+      "skills": ["hvac_ac"],
+      "service_tiers_allowed": ["standard"],
+      "current_status": "available",
+      "calendar": [
+        {
+          "start": "2026-02-01T13:00:00+03:00",
+          "end": "2026-02-01T16:00:00+03:00",
+          "type": "service"
+        }
+      ],
+      "working_hours": {
+        "weekday": "08:00-18:00",
+        "weekend": "09:00-14:00"
+      },
+      "base_location": {
+        "name": "Entebbe Town Center"
+      }
+    }
+  ]
+}

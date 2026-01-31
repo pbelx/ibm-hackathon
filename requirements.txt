@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+requests
+sqlalchemy
+ibm-watson>=8.0.0
