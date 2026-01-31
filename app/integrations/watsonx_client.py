@@ -37,8 +37,9 @@ def generate_message(
     token = _get_iam_token(api_key)
     url = f"{base_url.rstrip('/')}/ml/v1/text/generation?version={version}"
     prompt = (
-        "System: You are a helpful dispatch assistant. Write a short, polite, customer-facing update. "
-        "Do not refuse or mention policies. Do not add extra commentary. "
+        "System: You are a helpful dispatch assistant. Write 2 to 4 short sentences, "
+        "maximum 60 words. Must include ETA minutes and ask for a location pin or nearby landmark. "
+        "Be empathetic and action-focused. Do not add extra commentary. "
         "Return only the message text.\n"
         f"User message: {user_message}\n"
         f"Dispatch details: {metadata}\n"
@@ -50,7 +51,8 @@ def generate_message(
         "input": prompt,
         "parameters": {
             "decoding_method": "greedy",
-            "max_new_tokens": 80,
+            "temperature": 0.3,
+            "max_new_tokens": 90,
             "min_new_tokens": 20,
             "stop_sequences": ["\n"],
         },

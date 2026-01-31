@@ -2,7 +2,7 @@
   "zones": [
     {
       "zone_id": "A",
-      "service_tier": "gold",
+      "service_tier": "platinum",
       "multiplier": 1.3,
       "areas": [
         {

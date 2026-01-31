@@ -14,7 +14,8 @@ def handle_chat(
     keywords = [k.lower() for k in signals.get("keywords", [])]
     entities = [e.lower() for e in signals.get("entities", [])]
     signal_text = " ".join(keywords + entities)
-    combined_text = signal_text or message
+    base_text = signal_text if signal_text else message.lower()
+    combined_text = f"{message} {signal_text}".strip()
 
     critical_terms = {
         "cold room",
@@ -24,27 +25,33 @@ def handle_chat(
         "chiller",
         "compressor down",
     }
-    priority = "CRITICAL" if any(t in signal_text for t in critical_terms) else "NORMAL"
+    priority = "CRITICAL" if any(t in base_text for t in critical_terms) else "NORMAL"
 
     maintenance_terms = {"maintenance", "service", "clean", "tune-up", "inspection"}
     if priority == "CRITICAL":
         intent = "emergency_repair"
-    elif any(t in signal_text for t in maintenance_terms):
+    elif any(t in base_text for t in maintenance_terms):
         intent = "maintenance"
     else:
         intent = "general_inquiry"
 
     commercial_terms = {"warehouse", "hotel", "export"}
     revenue_tier = "high" if priority == "CRITICAL" or any(
-        t in signal_text for t in commercial_terms
+        t in base_text for t in commercial_terms
     ) else "low"
 
     territory_result = validate_territory(combined_text, territory)
     cold_terms = {"cold room", "chiller", "freezer"}
-    required_skill = "cold_room" if any(t in signal_text for t in cold_terms) else "hvac_ac"
+    required_skill = "cold_room" if any(t in base_text for t in cold_terms) else "hvac_ac"
     tech = check_tech_availability(
         required_skill, territory_result["service_tier"], techs
     )
+
+    traffic_padding = (
+        locale.get("traffic", {}).get("default_padding_minutes", 20)
+    )
+    base_travel = 35 if territory_result["zone_id"] == "A" else 25
+    eta_minutes = int(base_travel + traffic_padding)
 
     quote = calculate_quote_range(
         problem_type=intent,
@@ -57,14 +64,24 @@ def handle_chat(
     tech_location = tech.get("base_location", {}).get("name", "your area")
     agent_message = (
         f"I understand. I am dispatching {tech_name} now. "
-        f"They are near {tech_location}. We will keep you updated."
+        f"They are near {tech_location} and should arrive in about {eta_minutes} minutes. "
+        "Please share a location pin or nearby landmark."
     )
 
-    ui_trigger = (
-        "show_technician_card"
-        if tech and intent == "emergency_repair"
-        else "none"
+    safety_terms = {"smoke", "fire", "sparks", "gas"}
+    safety_alert = priority == "CRITICAL" and any(
+        t in combined_text.lower() for t in safety_terms
     )
+    if safety_alert:
+        agent_message = (
+            "If safe, switch off the unit and keep clear of smoke or sparks. "
+            + agent_message
+        )
+        ui_trigger = "show_emergency_banner"
+    elif tech and intent == "emergency_repair":
+        ui_trigger = "show_technician_card"
+    else:
+        ui_trigger = "none"
 
     return {
         "agent_message": agent_message,
@@ -76,9 +93,18 @@ def handle_chat(
             "zone_id": territory_result["zone_id"],
             "service_tier": territory_result["service_tier"],
             "tech_assigned": tech.get("tech_id"),
+            "eta_minutes": eta_minutes,
             "quote_min": quote["min"],
             "quote_max": quote["max"],
             "currency": quote["currency"],
+            "safety_alert": safety_alert,
         },
         "ui_trigger": ui_trigger,
+        "tech_card": {
+            "tech_id": tech.get("tech_id"),
+            "name": tech.get("display_name"),
+            "eta_minutes": eta_minutes,
+            "photo_url": tech.get("photo_url"),
+            "skills": tech.get("skills", []),
+        } if ui_trigger == "show_technician_card" else None,
     }

@@ -4,7 +4,7 @@
       "tech_id": "TECH-001",
       "display_name": "James Kato",
       "skills": ["hvac_ac", "cold_room"],
-      "service_tiers_allowed": ["gold", "standard"],
+      "service_tiers_allowed": ["platinum", "gold", "standard"],
       "current_status": "available",
       "calendar": [
         {
@@ -19,7 +19,8 @@
       },
       "base_location": {
         "name": "Entebbe Industrial Area"
-      }
+      },
+      "photo_url": "https://example.com/techs/james-kato.jpg"
     },
     {
       "tech_id": "TECH-002",
@@ -40,7 +41,8 @@
       },
       "base_location": {
         "name": "Entebbe Town Center"
-      }
+      },
+      "photo_url": "https://example.com/techs/sarah-namara.jpg"
     }
   ]
 }
